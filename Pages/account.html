@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DecentralChat Pro</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx" crossorigin="anonymous">
+
+  <style>
+    /* Add hover effect for the Chat Contacts */
+    #contactList li:hover {
+      background-color: #eaeaea; /* Change the background color to your desired color */
+      cursor: pointer;
+    }
+
+    /* Change the color of the send button to blue */
+    #sendMessageButton {
+      border:  none;
+      background-color: #4b3c90; /* Change the background color to your desired color */
+      color: #fff; /* Change the text color to white or your desired color */
+    }
+
+    #sendMessageButton:hover {
+      border: none;
+      background-color: #171036; /* Change the background color on hover to your desired color */
+    }
+
+    #contactList {
+      height: 400px; /* Change the height to your desired value */
+      overflow-y: none; /* Add scrollbar if needed */
+    }
+    #chatMessages {
+      height: 300px; /* Change the height to your desired value */
+      overflow-y: auto; /* Add scrollbar if needed */
+    }
+
+    /* Chat bubble styles */
+    .chat-bubble {
+      max-width: 90%; /* Adjust the maximum width of the chat bubble */
+      padding: 10px;
+      margin: 5px;
+      /*border-radius: 15px; /* Adjust the border-radius for a rounded look */
+    }
+
+    .sent-bubble {
+      background-color: #6a51d9;
+      color: #fff;
+      align-self: flex-end;
+      border-bottom-left-radius: 15px;
+      border-top-left-radius: 15px;
+      border-bottom-right-radius: 15px;
+    }
+
+    .received-bubble {
+      background-color: #eaeaea;
+      color: #000;
+      align-self: flex-start;
+      border-bottom-right-radius: 15px;
+      border-top-right-radius: 15px;
+      border-bottom-left-radius: 15px;
+    }
+
+    .btn-primary:hover {
+      background-color: #c2bdd9; /* Change this to your desired hover color */
+    }
+  </style>
+</head>
+
+<body style="background-color: #b5a4ff;">
+  <div class="container p-3">
+    <div class="row">
+      <div class="col">
+        <button onclick="back()" class="btn btn-primary" style="border-radius: 80px; background-color: #4b3c90; transition: background-color 0.3s; color: #fff; border: none;">Logout</button>
+    </div>
+    
+    </div>
+</div>
+
+</div>
+
+
+  <div class="container-fluid">
+    <div class="row">
+      <!-- Sidebar -->
+      <div class="col-md-3 bg-dark text-light">
+        <h2 class="text-center mt-3 mb-4">Chat Contacts</h2>
+        <ul class="list-group" id="contactList">
+          <!-- Contacts will be dynamically added here -->
+        </ul>
+      </div>
+
+      <!-- Chat Window -->
+      <div class="col-md-9">
+        <div class="container">
+          <div class="row p-5">
+            <div class="col">
+              <h1 style="text-align: center;">DecentralChat Pro </h1>
+            </div>
+          </div>
+
+          <div class="col-6">
+            <h6 style="padding-left: 18rem;" id="Profile"></h6>
+          </div>
+
+          <div class="col-6">
+            <h6 style="padding-left: 18rem;" id="ToText" >To: <span id="ToAdd"></span> </h6>
+          </div>
+
+          <div id="chatMessages" class="container">
+            <!-- Chat messages will be dynamically added here -->
+          </div>
+
+          <div class="input-group mb-3">
+            <input type="text" class="form-control" placeholder="Type message" id="inputMessage"
+              aria-describedby="button-addon2" />
+            <button class="btn btn-warning" type="button" onclick="onSendMessage()" id="sendMessageButton"
+              style="padding-top: .55rem;">
+              Send
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-A3rJD856KowSb7dwlZdYEkO39Gagi7vIsF0jrRAoQmDKKtQBHUuLZ9AsSv4jD4Xa"
+    crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.7.4/web3.min.js"
+    integrity="sha512-oMd9Re3VgJcXuZJn9DN6X7S7JUc7xLYZ2UyZ85Mm/xzaW3lwBr4fV2zjuu/n5jY/Of/2JOx35CTa6zvQNxb31Q=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script type="application/json" src="Abi.json" id="imp"></script>
+  <script>
+    var myaccount = localStorage.getItem("myaddress");
+
+    let abi= [
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "message",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "timestamp",
+				"type": "string"
+			}
+		],
+		"name": "message",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_to",
+				"type": "address"
+			},
+			{
+				"internalType": "string",
+				"name": "_message",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "time",
+				"type": "string"
+			}
+		],
+		"name": "sendMessage",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	}
+];
+    let contractAddress = '0x9E20da269741FC4c2f0dEe27466C723661Ec12e6';
+
+    // onstart
+    window.onload = function () {
+      if (myaccount == null) {
+        window.location.replace('index.html');
+      }
+
+      addContacts();
+    };
+
+    function back() {
+      localStorage.removeItem("myaddress");
+      window.location.replace('index.html');
+    }
+
+    function addContacts() {
+      let web3 = new Web3(new Web3.providers.HttpProvider("http://127.0.0.1:7545"));
+      web3.eth.getAccounts(function (error, accounts) {
+        var n = accounts.length;
+        var temp = '';
+        for (var i = 0; i < n; i++) {
+          if (accounts[i] == myaccount) {
+            continue;
+          }
+          var truncatedAddress = truncateAddress(accounts[i], 28);
+          temp += '<li class="list-group-item" id="' + accounts[i] + '" onclick="loadMessages(\'' + accounts[i] + '\')">' +
+            truncatedAddress +
+            '</li>';
+        }
+        document.getElementById("contactList").innerHTML = temp;
+        document.getElementById("Profile").innerHTML = 'Account: ' + myaccount;
+        document.getElementById("ToAdd").innerHTML = myaccount;
+      });
+    }
+
+    function truncateAddress(address, length) {
+      if (address.length > length) {
+        return address.substring(0, length) + '...';
+      } else {
+        return address;
+      }
+    }
+
+    document.getElementById("ToAdd").innerHTML = ' ';
+    function loadMessages(contactId) {
+      let web3 = new Web3(new Web3.providers.HttpProvider("http://127.0.0.1:7545"));
+      let mycontract = new web3.eth.Contract(abi, contractAddress);
+
+      mycontract.getPastEvents('message', {
+        fromBlock: 0,
+        toBlock: 'latest',
+      }, function (err, data) {
+        let x = data.length;
+        var chatMessages = '';
+        for (var n = 0; n < x; n++) {
+          var timestamp = data[n].returnValues.timestamp; // Corrected timestamp extraction
+
+          if (data[n].returnValues.from == contactId && data[n].returnValues.to == myaccount) {
+            chatMessages += getMessageHtml(data[n].returnValues.message, 'received', timestamp);
+          }
+
+          if (data[n].returnValues.to == contactId && data[n].returnValues.from == myaccount) {
+            chatMessages += getMessageHtml(data[n].returnValues.message, 'sent', timestamp);
+          }
+        }
+        document.getElementById("chatMessages").innerHTML = chatMessages;
+        document.getElementById("inputMessage").value = ''; // Clear the input field
+        document.getElementById("sendMessageButton").setAttribute("onclick", "onSendMessage('" + contactId + "')");
+
+        //document.getElementById("ToAdd").innerHTML = '';
+        document.getElementById("ToAdd").innerHTML = contactId;
+      });
+    }
+
+
+    function onSendMessage(contactId) {
+      var message = document.getElementById("inputMessage").value;
+      let web3 = new Web3(new Web3.providers.HttpProvider("http://127.0.0.1:7545"));
+      let mycontract = new web3.eth.Contract(abi, contractAddress);
+      var date = new Date().toLocaleDateString("IN");
+      var time = new Date().toLocaleTimeString("IN");
+      time = time.split('.');
+      var accurateTime = date + ' ' + time[0] + ':' + time[1];
+
+      mycontract.methods.sendMessage(contactId, message, accurateTime).send({ from: myaccount }, function (err, transcationHash) {
+        if (err) {
+          console.log(error);
+        } else {
+          var messageType = contactId == null ? 'sent' : 'send';
+          document.getElementById("chatMessages").innerHTML += getMessageHtml(message, messageType, accurateTime);
+          document.getElementById("inputMessage").value = ''; // Clear the input field
+        }
+      });
+    }
+
+    function getMessageHtml(message, messageType, timestamp) {
+      var bubbleClass = messageType === 'received' ? 'received-bubble' : 'sent-bubble';
+
+      return '<div class="row justify-content-' + (messageType === 'received' ? 'start' : 'end') + '">' +
+        '<div class="col-8 col-md-auto">' +
+        '<div class="chat-bubble ' + bubbleClass + '">' +
+        message +
+        '<h6 style="font-size: 0.6em;">' + messageType + ' ' + timestamp + '</h6>' +
+        '</div>' +
+        '</div>' +
+        '</div>';
+    }
+  </script>
+</body>
+
+</html>
